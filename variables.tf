@@ -98,7 +98,13 @@ variable "batch_target" {
     job_attempts   = optional(number)
   })
   default = null
-
+  validation {
+    condition = var.batch_target == null ? true : (
+      (var.batch_target.array_size == null || (var.batch_target.array_size >= 2 && var.batch_target.array_size <= 10000)) &&
+      (var.batch_target.job_attempts == null || (var.batch_target.job_attempts >= 1 && var.batch_target.job_attempts <= 10))
+    )
+    error_message = "batch_target.array_size must be 2-10000 and batch_target.job_attempts must be 1-10 when provided."
+  }
 }
 
 variable "dead_letter_config" {
@@ -181,6 +187,14 @@ variable "retry_policy" {
     maximum_retry_attempts       = optional(number)
   })
   default = null
+
+  validation {
+    condition = var.retry_policy == null ? true : (
+      (var.retry_policy.maximum_event_age_in_seconds == null || (var.retry_policy.maximum_event_age_in_seconds >= 60 && var.retry_policy.maximum_event_age_in_seconds <= 86400)) &&
+      (var.retry_policy.maximum_retry_attempts == null || (var.retry_policy.maximum_retry_attempts >= 0 && var.retry_policy.maximum_retry_attempts <= 185))
+    )
+    error_message = "retry_policy.maximum_event_age_in_seconds must be 60-86400 and retry_policy.maximum_retry_attempts must be 0-185 when provided."
+  }
 }
 
 variable "run_command_targets" {

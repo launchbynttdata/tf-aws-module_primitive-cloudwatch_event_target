@@ -39,3 +39,8 @@ output "log_group_name" {
   description = "The name of the CloudWatch log group (for test verification)."
   value       = aws_cloudwatch_log_group.example.name
 }
+
+output "log_group_arn" {
+  description = "The ARN of the CloudWatch log group used as the event target."
+  value       = aws_cloudwatch_log_group.example.arn
+}

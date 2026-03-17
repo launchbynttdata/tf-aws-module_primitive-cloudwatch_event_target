@@ -23,10 +23,21 @@ resource "aws_cloudwatch_event_target" "target" {
   input_path = var.input == null && var.input_transformer == null ? var.input_path : null
 
   dynamic "input_transformer" {
-    for_each = var.input_transformer != null ? [var.input_transformer] : []
+    for_each = var.input_transformer != null && var.input == null && var.input_path == null ? [var.input_transformer] : []
     content {
       input_paths    = input_transformer.value.input_paths
       input_template = input_transformer.value.input_template
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition = (
+        (var.input != null ? 1 : 0) +
+        (var.input_path != null ? 1 : 0) +
+        (var.input_transformer != null ? 1 : 0)
+      ) <= 1
+      error_message = "Only one of input, input_path, or input_transformer may be set."
     }
   }
 

@@ -3,8 +3,8 @@ package testimpl
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -23,10 +23,20 @@ func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 	rule := terraform.Output(t, terraformOptions, "rule")
 	targetID := terraform.Output(t, terraformOptions, "target_id")
 	arn := terraform.Output(t, terraformOptions, "arn")
+	resourceID := terraform.Output(t, terraformOptions, "id")
+	idSegments := strings.Split(resourceID, "/")
+	require.GreaterOrEqual(t, len(idSegments), 3, "id should contain event_bus_name/rule/target_id")
+	expectedRule := idSegments[len(idSegments)-2]
+	expectedTargetID := idSegments[len(idSegments)-1]
+	expectedArn := terraform.Output(t, terraformOptions, "log_group_arn")
+	eventBusName := terraform.Output(t, terraformOptions, "event_bus_name")
+	if eventBusName == "" {
+		eventBusName = "default"
+	}
 
-	require.NotEmpty(t, rule, "rule output should be set")
-	require.NotEmpty(t, targetID, "target_id output should be set")
-	require.NotEmpty(t, arn, "arn output should be set")
+	assert.Equal(t, expectedRule, rule, "rule output should match expected rule name")
+	assert.Equal(t, expectedTargetID, targetID, "target_id output should match expected target ID")
+	assert.Equal(t, expectedArn, arn, "arn output should match expected target ARN")
 
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(getAWSRegion(t)))
 	require.NoError(t, err)
@@ -36,7 +46,7 @@ func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 	// Verify target exists via AWS API
 	listInput := &cloudwatchevents.ListTargetsByRuleInput{
 		Rule:         aws.String(rule),
-		EventBusName: aws.String("default"),
+		EventBusName: aws.String(eventBusName),
 	}
 	listOutput, err := eventBridgeClient.ListTargetsByRule(context.Background(), listInput)
 	require.NoError(t, err)
@@ -72,17 +82,15 @@ func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 				Source:       aws.String("test"),
 				DetailType:   aws.String("TestEvent"),
 				Detail:       aws.String(`{"test":"event"}`),
-				EventBusName: aws.String("default"),
+				EventBusName: aws.String(eventBusName),
 			},
 		},
 	}
 	putOutput, err := eventBridgeClient.PutEvents(context.Background(), putInput)
 	require.NoError(t, err)
-	require.NotEmpty(t, putOutput.Entries, "PutEvents should return entries")
+	require.Len(t, putOutput.Entries, 1, "PutEvents should return one entry")
+	assert.Zero(t, putOutput.FailedEntryCount, "PutEvents should not report failed entries")
 	assert.Equal(t, "", aws.ToString(putOutput.Entries[0].ErrorCode), "PutEvents should succeed without error")
-
-	// Allow event delivery
-	time.Sleep(5 * time.Second)
 }
 
 func TestComposableCompleteReadOnly(t *testing.T, ctx types.TestContext) {
@@ -91,10 +99,20 @@ func TestComposableCompleteReadOnly(t *testing.T, ctx types.TestContext) {
 	rule := terraform.Output(t, terraformOptions, "rule")
 	targetID := terraform.Output(t, terraformOptions, "target_id")
 	arn := terraform.Output(t, terraformOptions, "arn")
+	resourceID := terraform.Output(t, terraformOptions, "id")
+	idSegments := strings.Split(resourceID, "/")
+	require.GreaterOrEqual(t, len(idSegments), 3, "id should contain event_bus_name/rule/target_id")
+	expectedRule := idSegments[len(idSegments)-2]
+	expectedTargetID := idSegments[len(idSegments)-1]
+	expectedArn := terraform.Output(t, terraformOptions, "log_group_arn")
+	eventBusName := terraform.Output(t, terraformOptions, "event_bus_name")
+	if eventBusName == "" {
+		eventBusName = "default"
+	}
 
-	require.NotEmpty(t, rule, "rule output should be set")
-	require.NotEmpty(t, targetID, "target_id output should be set")
-	require.NotEmpty(t, arn, "arn output should be set")
+	assert.Equal(t, expectedRule, rule, "rule output should match expected rule name")
+	assert.Equal(t, expectedTargetID, targetID, "target_id output should match expected target ID")
+	assert.Equal(t, expectedArn, arn, "arn output should match expected target ARN")
 
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(getAWSRegion(t)))
 	require.NoError(t, err)
@@ -104,7 +122,7 @@ func TestComposableCompleteReadOnly(t *testing.T, ctx types.TestContext) {
 	// Read-only: verify target exists and attributes match
 	listInput := &cloudwatchevents.ListTargetsByRuleInput{
 		Rule:         aws.String(rule),
-		EventBusName: aws.String("default"),
+		EventBusName: aws.String(eventBusName),
 	}
 	listOutput, err := eventBridgeClient.ListTargetsByRule(context.Background(), listInput)
 	require.NoError(t, err)

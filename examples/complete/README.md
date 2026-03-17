@@ -182,4 +182,5 @@ module "event_target" {
 | <a name="output_arn"></a> [arn](#output\_arn) | The ARN of the target resource. |
 | <a name="output_event_bus_name"></a> [event\_bus\_name](#output\_event\_bus\_name) | The name or ARN of the event bus. |
 | <a name="output_log_group_name"></a> [log\_group\_name](#output\_log\_group\_name) | The name of the CloudWatch log group (for test verification). |
+| <a name="output_log_group_arn"></a> [log\_group\_arn](#output\_log\_group\_arn) | The ARN of the CloudWatch log group used as the event target. |
 <!-- END_TF_DOCS -->
