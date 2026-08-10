@@ -20,16 +20,16 @@ import (
 func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 	terraformOptions := ctx.TerratestTerraformOptions()
 
-	rule := terraform.Output(t, terraformOptions, "rule")
-	targetID := terraform.Output(t, terraformOptions, "target_id")
-	arn := terraform.Output(t, terraformOptions, "arn")
-	resourceID := terraform.Output(t, terraformOptions, "id")
+	rule := terraform.OutputContext(t, context.Background(), terraformOptions, "rule")
+	targetID := terraform.OutputContext(t, context.Background(), terraformOptions, "target_id")
+	arn := terraform.OutputContext(t, context.Background(), terraformOptions, "arn")
+	resourceID := terraform.OutputContext(t, context.Background(), terraformOptions, "id")
 	idSegments := strings.Split(resourceID, "/")
 	require.GreaterOrEqual(t, len(idSegments), 3, "id should contain event_bus_name/rule/target_id")
 	expectedRule := idSegments[len(idSegments)-2]
 	expectedTargetID := idSegments[len(idSegments)-1]
-	expectedArn := terraform.Output(t, terraformOptions, "log_group_arn")
-	eventBusName := terraform.Output(t, terraformOptions, "event_bus_name")
+	expectedArn := terraform.OutputContext(t, context.Background(), terraformOptions, "log_group_arn")
+	eventBusName := terraform.OutputContext(t, context.Background(), terraformOptions, "event_bus_name")
 	if eventBusName == "" {
 		eventBusName = "default"
 	}
@@ -63,7 +63,7 @@ func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 	assert.Equal(t, arn, aws.ToString(foundTarget.Arn), "Target ARN should match Terraform output")
 
 	// Verify CloudWatch log group has KMS encryption via AWS API
-	logGroupName := terraform.Output(t, terraformOptions, "log_group_name")
+	logGroupName := terraform.OutputContext(t, context.Background(), terraformOptions, "log_group_name")
 	require.NotEmpty(t, logGroupName, "log_group_name output should be set")
 	logsClient := cloudwatchlogs.NewFromConfig(cfg)
 	describeLogGroupsOutput, err := logsClient.DescribeLogGroups(context.Background(), &cloudwatchlogs.DescribeLogGroupsInput{
@@ -96,16 +96,16 @@ func TestComposableComplete(t *testing.T, ctx types.TestContext) {
 func TestComposableCompleteReadOnly(t *testing.T, ctx types.TestContext) {
 	terraformOptions := ctx.TerratestTerraformOptions()
 
-	rule := terraform.Output(t, terraformOptions, "rule")
-	targetID := terraform.Output(t, terraformOptions, "target_id")
-	arn := terraform.Output(t, terraformOptions, "arn")
-	resourceID := terraform.Output(t, terraformOptions, "id")
+	rule := terraform.OutputContext(t, context.Background(), terraformOptions, "rule")
+	targetID := terraform.OutputContext(t, context.Background(), terraformOptions, "target_id")
+	arn := terraform.OutputContext(t, context.Background(), terraformOptions, "arn")
+	resourceID := terraform.OutputContext(t, context.Background(), terraformOptions, "id")
 	idSegments := strings.Split(resourceID, "/")
 	require.GreaterOrEqual(t, len(idSegments), 3, "id should contain event_bus_name/rule/target_id")
 	expectedRule := idSegments[len(idSegments)-2]
 	expectedTargetID := idSegments[len(idSegments)-1]
-	expectedArn := terraform.Output(t, terraformOptions, "log_group_arn")
-	eventBusName := terraform.Output(t, terraformOptions, "event_bus_name")
+	expectedArn := terraform.OutputContext(t, context.Background(), terraformOptions, "log_group_arn")
+	eventBusName := terraform.OutputContext(t, context.Background(), terraformOptions, "event_bus_name")
 	if eventBusName == "" {
 		eventBusName = "default"
 	}
@@ -139,7 +139,7 @@ func TestComposableCompleteReadOnly(t *testing.T, ctx types.TestContext) {
 	assert.Equal(t, arn, aws.ToString(foundTarget.Arn), "Target ARN should match Terraform output")
 
 	// Verify CloudWatch log group has KMS encryption via AWS API
-	logGroupName := terraform.Output(t, terraformOptions, "log_group_name")
+	logGroupName := terraform.OutputContext(t, context.Background(), terraformOptions, "log_group_name")
 	require.NotEmpty(t, logGroupName, "log_group_name output should be set")
 	logsClient := cloudwatchlogs.NewFromConfig(cfg)
 	describeLogGroupsOutput, err := logsClient.DescribeLogGroups(context.Background(), &cloudwatchlogs.DescribeLogGroupsInput{
